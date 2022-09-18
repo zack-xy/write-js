@@ -1,3 +1,4 @@
+/* eslint-disable no-self-compare */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-undef */
 // 响应式数据的读取分三种
@@ -5,12 +6,19 @@
 // 2. 判断对象或原型上是否存在给定的key：key in obj
 // 3. 使用for...in循环遍历对象：for(const key in obj) {}
 
+// 增加新值变化判断
+// 增加原型继承的非必要副作用执行
+
 const obj = { foo: 1 }
 // eslint-disable-next-line symbol-description
 const ITERATE_KEY = Symbol()
 
 const p = new Proxy(obj, {
   get(target, key, receiver) {
+    // 代理对象可以通过raw属性访问原始数据
+    if (key === 'raw')
+      return target
+
     // 建立联系
     track(target, key)
     // 返回属性值
@@ -18,12 +26,22 @@ const p = new Proxy(obj, {
   },
   // 拦截器设置操作
   set(target, key, newVal, receiver) {
+    // 获取旧值
+    const oldVal = target[key]
     // 如果属性不存在，则说明是在添加新属性，否则是设置已有属性
     const type = Object.prototype.hasOwnProperty.call(target, key) ? 'SET' : 'ADD'
     // 设置属性值
     const res = Reflect.set(target, key, newVal, receiver)
-    // 取出副作用函数并执行,将type传入
-    trigger(target, key, type)
+    // 比较新值与旧值，值变化了才触发响应
+    // 后面的自己和自己比较，是为了弥补缺陷是NaN总是和NaN不相等，意思是都不是NaN时再执行
+
+    // target === receiver.raw说明receiver就是target的代理对象
+    if (target === receiver.raw) {
+      if (oldVal !== newVal && (oldVal === oldVal || newVal === newVal)) {
+        // 取出副作用函数并执行,将type传入
+        trigger(target, key, type)
+      }
+    }
     return res
   },
   // [[HasProperty]]拦截(key in obj)

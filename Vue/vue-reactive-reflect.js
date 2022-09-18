@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-undef */
 // 响应式数据的读取分三种
 // 1. 点读取：obj.foo

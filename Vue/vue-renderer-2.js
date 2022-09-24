@@ -161,3 +161,62 @@ function mountElement(vnode, container) {
   }
   insert(el, container)
 }
+
+function shouldSetAsProps(el, key, value) {
+  // 特殊处理
+  if (key === 'form' && el.tagName === 'INPUT')
+    return false
+  // 兜底
+  return key in el
+}
+// 把属性设置也变成与平台无关，需要把属性设置相关操作也提取到渲染器选项中
+const renderer = createRenderer({
+  createElement(tag) {
+    return document.createElement(tag)
+  },
+  setElementText(el, text) {
+    el.textContent = text
+  },
+  insert(el, parent, anchor = null) {
+    parent.insertBefore(el, anchor)
+  },
+  // 将属性设置相关操作封装到patchProps函数中，并作为渲染器选项传递
+  patchProps(el, key, prevValue, nextValue) {
+    // 对class进行特殊处理
+    // 因为对class的设置有3种方法，className是性能最好的
+    // el.className、setAttribute和el.classList
+    if (key === 'class') {
+      el.className = nextValue || ''
+    }
+    else if (shouldSetAsProps(el, key, nextValue)) {
+      const type = typeof el[key]
+      if (type === 'boolean' && nextValue === '')
+        el[key] = true
+
+      else
+        el[key] = nextValue
+    }
+    else {
+      el.setAttribute(key, nextValue)
+    }
+  },
+})
+
+function mountElement(vnode, container) {
+  const el = createElement(vnode.type)
+  if (typeof vnode.children === 'string') {
+    setElementText(el, vnode.children)
+  }
+  else if (Array.isArray(vnode.children)) {
+    vnode.children.forEach((child) => {
+      patch(null, child, el)
+    })
+  }
+  if (vnode.props) {
+    for (const key in vnode.props) {
+      // 调用patchProps函数即可
+      patchProps(el, key, null, vnode.props[key])
+    }
+  }
+  insert(el, container)
+}

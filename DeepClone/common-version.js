@@ -1,4 +1,5 @@
 // 这个代码兼容了基本类型
+// 简单版本
 
 export function deepClone(source) {
   // 兼容基本类型

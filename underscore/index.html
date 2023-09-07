@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手写underscore</title>
+</head>
+<body>
+  <script src="./_.js"></script>
+  <script>
+    
+    // console.log(_.unique([1,2,3,4,4,5,5,5,6,'a','A'], function(item) {
+    //   return typeof item === 'string' ? item.toLowerCase() : item
+    // }))
+    console.log(_([1,2,3,4,4,5,5,5,6,'a','A']).chain().unique(function(item) {
+      return typeof item === 'string' ? item.toLowerCase() : item
+    }).filters().ending())
+ 
+  </script>
+</body>
+</html>
